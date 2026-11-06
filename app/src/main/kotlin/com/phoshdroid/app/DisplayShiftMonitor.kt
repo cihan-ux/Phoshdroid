@@ -89,9 +89,7 @@ class DisplayShiftMonitor(
             Log.d("Phoshdroid.Monitor", "[$source] bootstrap in progress, skipping")
             return
         }
-        val bounds = activity.windowManager.currentWindowMetrics.bounds
-        val currentW = bounds.width()
-        val currentH = bounds.height()
+        val (currentW, currentH) = activity.displaySizePx()
         // Defensively skip when the WM hasn't given us real dimensions yet.
         // The next foregrounding tick will catch it.
         if (currentW <= 0 || currentH <= 0) {

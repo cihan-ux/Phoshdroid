@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.phoshdroid.app"
-        minSdk = 31
+        minSdk = 29
         targetSdk = 35
         versionCode = 13
         versionName = "0.0.13-alpha"

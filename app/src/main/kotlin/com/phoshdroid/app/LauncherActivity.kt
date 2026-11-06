@@ -153,9 +153,7 @@ class LauncherActivity : AppCompatActivity() {
      */
     private fun checkForDisplayShift(source: String): Boolean {
         if (restartInFlight) return true
-        val bounds = windowManager.currentWindowMetrics.bounds
-        val currentW = bounds.width()
-        val currentH = bounds.height()
+        val (currentW, currentH) = displaySizePx()
         val currentId = currentDisplayId()
         val prefs = getSharedPreferences(DISPLAY_STATE_PREFS, MODE_PRIVATE)
         val lastW = prefs.getInt("last_w", 0)
@@ -430,9 +428,7 @@ class LauncherActivity : AppCompatActivity() {
             // at a tiny resolution.
             val (dw, dh) =
                 run {
-                    val wmBounds = windowManager.currentWindowMetrics.bounds
-                    val wmW = wmBounds.width()
-                    val wmH = wmBounds.height()
+                    val (wmW, wmH) = displaySizePx()
                     if (wmW > 0 && wmH > 0) return@run wmW to wmH
                     val metrics = resources.displayMetrics
                     val mW = metrics.widthPixels
