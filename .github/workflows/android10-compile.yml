@@ -1,0 +1,22 @@
+name: Android 10 source compatibility
+
+on:
+  push:
+    branches: [android10-compat]
+  workflow_dispatch:
+
+jobs:
+  compile-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Compile sources and run unit tests, do not publish incomplete APK
+        run: ./gradlew --no-daemon :app:compileDebugKotlin :app:testDebugUnitTest

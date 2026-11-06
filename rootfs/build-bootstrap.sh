@@ -4,7 +4,7 @@
 # Outputs:
 #   - app/src/main/jniLibs/arm64-v8a/libbash.so       (executable via nativeLibDir)
 #   - app/src/main/jniLibs/arm64-v8a/libproot.so       (executable via nativeLibDir)
-#   - app/src/main/assets/bootstrap.tar.gz              (scripts + libs, non-executable)
+#   - app/src/main/assets/bootstrap.bin                 (gzip tar assets)
 #
 # Native binaries go into jniLibs/ so Android extracts them with exec permission.
 # Everything else (scripts, shared libs, config) goes into the assets tarball.
@@ -17,7 +17,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 JNILIBS_DIR="$PROJECT_DIR/app/src/main/jniLibs/arm64-v8a"
-ASSET_OUTPUT="$PROJECT_DIR/app/src/main/assets/bootstrap.tar.gz"
+ASSET_OUTPUT="$PROJECT_DIR/app/src/main/assets/bootstrap.bin"
 ARCH="aarch64"
 
 STAGING_DIR=$(mktemp -d)

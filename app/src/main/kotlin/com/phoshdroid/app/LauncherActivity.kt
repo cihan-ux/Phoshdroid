@@ -281,9 +281,18 @@ class LauncherActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun bootstrap() {
+    private suspend fun bootstrap(): Boolean {
         val filesDir = applicationContext.filesDir
         val extractor = AssetExtractor()
+
+        // Git source checkouts intentionally omit the large Linux archives.
+        val missingAssets = listOf("bootstrap.bin", "rootfs.bin").filter { name ->
+            runCatching { assets.open(name).use { } }.isFailure
+        }
+        if (missingAssets.isNotEmpty()) {
+            showError("Linux archive missing: ${missingAssets.joinToString()}. Package both archives before creating an APK.")
+            return false
+        }
 
         // Phase 1: Extract Termux bootstrap
         val bootstrapDir = File(filesDir, "usr")
@@ -298,7 +307,7 @@ class LauncherActivity : AppCompatActivity() {
                 }
             if (!extracted) {
                 showError("Failed to extract Termux environment.")
-                return
+                return false
             }
         }
         // Create symlinks from prefix/bin to native lib dir binaries
@@ -338,7 +347,7 @@ class LauncherActivity : AppCompatActivity() {
                         formatSize(availableBytes),
                     ),
                 )
-                return
+                return false
             }
 
             progressBar.isIndeterminate = true
@@ -356,7 +365,7 @@ class LauncherActivity : AppCompatActivity() {
                 }
             if (!extracted) {
                 showError("Failed to extract postmarketOS.")
-                return
+                return false
             }
         }
 
@@ -369,7 +378,7 @@ class LauncherActivity : AppCompatActivity() {
 
         // Phase 4: Write config
         val prefs = PhoshdroidPreferences(this)
-        val configFile = File(filesDir, "proot-distro/installed-rootfs/postmarketos/etc/phoshdroid/config")
+        val configFile = File(rootfsDir, "etc/phoshdroid/config")
         ProotConfigWriter(configFile).write(prefs.toProotConfig())
 
         // Default Termux:X11 to direct-touch input mode — phone users expect finger
@@ -538,7 +547,7 @@ class LauncherActivity : AppCompatActivity() {
                 "Phoshdroid",
                 "bootstrap finished while backgrounded; deferring MainActivity launch",
             )
-            return
+            return true
         }
         try {
             val waylandIntent =
@@ -552,8 +561,10 @@ class LauncherActivity : AppCompatActivity() {
             finish()
             @Suppress("DEPRECATION")
             overridePendingTransition(0, 0)
+            return true
         } catch (e: Exception) {
             statusText.text = "Display failed: ${e.message}"
+            return false
         }
     }
 

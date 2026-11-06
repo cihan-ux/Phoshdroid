@@ -1,6 +1,6 @@
 #!/bin/bash
 # Builds a pmOS rootfs for Phoshdroid using pmbootstrap.
-# Output: app/src/main/assets/rootfs.tar.zst
+# Output: app/src/main/assets/rootfs.bin (gzip-compressed tar)
 #
 # Prerequisites:
 #   - pmbootstrap installed (pip install pmbootstrap)
@@ -12,7 +12,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-OUTPUT="$PROJECT_DIR/app/src/main/assets/rootfs.tar.zst"
+OUTPUT="$PROJECT_DIR/app/src/main/assets/rootfs.bin"
 OVERLAY_DIR="$SCRIPT_DIR/overlay"
 WORK_DIR="${PMBOOTSTRAP_WORK:-$HOME/.local/var/pmbootstrap}"
 
@@ -53,6 +53,6 @@ chmod +x "$STAGING_DIR/etc/phoshdroid/start.sh"
 
 # Compress
 echo "Compressing rootfs..."
-tar -cf - -C "$STAGING_DIR" . | zstd -19 -T0 -o "$OUTPUT"
+tar -czf "$OUTPUT" -C "$STAGING_DIR" .
 
 echo "=== Done: $OUTPUT ($(du -h "$OUTPUT" | cut -f1)) ==="

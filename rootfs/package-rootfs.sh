@@ -7,9 +7,9 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-OUTPUT="$PROJECT_DIR/app/src/main/assets/rootfs.tar"
+OUTPUT="$PROJECT_DIR/app/src/main/assets/rootfs.bin"
 OVERLAY_DIR="$SCRIPT_DIR/overlay"
-ROOTFS="/home/phil/.local/var/pmbootstrap/chroot_rootfs_qemu-aarch64"
+ROOTFS="${PHOSHDROID_ROOTFS_DIR:-${PMBOOTSTRAP_WORK:-$HOME/.local/var/pmbootstrap}/chroot_rootfs_qemu-aarch64}"
 
 echo "=== Packaging pmOS rootfs for Phoshdroid ==="
 
@@ -37,8 +37,8 @@ echo "Applying Phoshdroid overlay..."
 sudo cp -r "$OVERLAY_DIR/"* "$STAGING_DIR/"
 sudo chmod +x "$STAGING_DIR/etc/phoshdroid/start.sh"
 
-echo "Creating tarball (uncompressed — APK handles compression)..."
-sudo tar -cf "$OUTPUT" -C "$STAGING_DIR" .
+echo "Creating gzip-compressed rootfs tarball..."
+sudo tar -czf "$OUTPUT" -C "$STAGING_DIR" .
 sudo chown "$(whoami)" "$OUTPUT"
 
 SIZE=$(du -h "$OUTPUT" | cut -f1)
