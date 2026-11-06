@@ -1,0 +1,54 @@
+name: Android 10 experimental APK (unverified)
+
+on:
+  push:
+    branches: [android10-compat]
+    paths:
+      - '.github/workflows/android10-apk.yml'
+  workflow_dispatch:
+
+jobs:
+  experimental-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Download upstream 0.0.13 Linux payloads for experiment
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --retry-delay 5 \
+            'https://github.com/zweck/Phoshdroid/releases/download/v0.0.13-alpha/app-debug.apk' \
+            --output /tmp/Phoshdroid-upstream.apk
+          unzip -Z1 /tmp/Phoshdroid-upstream.apk | grep -Fx 'assets/bootstrap.bin'
+          unzip -Z1 /tmp/Phoshdroid-upstream.apk | grep -Fx 'assets/rootfs.bin'
+          mkdir -p app/src/main/assets
+          unzip -p /tmp/Phoshdroid-upstream.apk assets/bootstrap.bin > app/src/main/assets/bootstrap.bin
+          unzip -p /tmp/Phoshdroid-upstream.apk assets/rootfs.bin > app/src/main/assets/rootfs.bin
+          python3 - <<'PY'
+          from pathlib import Path
+          for name in ('bootstrap.bin', 'rootfs.bin'):
+              f = Path('app/src/main/assets') / name
+              with f.open('rb') as stream:
+                  magic = stream.read(2)
+              print(name, f.stat().st_size, 'bytes; gzip magic:', magic.hex())
+              assert f.stat().st_size > 100_000, f'{name} missing or too small'
+              assert magic == b'\x1f\x8b', f'{name} must be gzip tar'
+          PY
+          rm -f /tmp/Phoshdroid-upstream.apk
+      - name: Build debug APK (NOT device verified)
+        run: ./gradlew --no-daemon -Dorg.gradle.jvmargs='-Xmx4g -Dfile.encoding=UTF-8' :app:assembleDebug
+      - name: Publish private workflow artifact only
+        uses: actions/upload-artifact@v4
+        with:
+          name: Phoshdroid-Android10-EXPERIMENTAL-UNVERIFIED
+          path: app/build/outputs/apk/debug/app-debug.apk
+          compression-level: 0
+          retention-days: 3
