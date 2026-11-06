@@ -38,6 +38,16 @@ class LauncherActivity : AppCompatActivity() {
             ActivityResultContracts.RequestPermission(),
         ) { /* proceed regardless */ }
 
+    private val storagePermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions(),
+        ) { permissions ->
+            if (!permissions.values.all { it }) {
+                Toast.makeText(this, "Storage denied; Linux starts without shared files", Toast.LENGTH_LONG).show()
+            }
+            startBootstrap()
+        }
+
     // The running proot session's XLORIE dimensions are persisted in
     // SharedPreferences. onCreate compares CURRENT display to LAST SAVED
     // dimensions; if they differ (e.g. user folded the phone between launches)
@@ -87,10 +97,26 @@ class LauncherActivity : AppCompatActivity() {
 
         bootstrapInProgress = true
         requestNotificationPermission()
+        // Android 10 runtime permission request completes asynchronously.
+        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
+            val missing = arrayOf(
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            ).filter {
+                ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+            }
+            if (missing.isNotEmpty()) {
+                storagePermissionLauncher.launch(missing.toTypedArray())
+                return
+            }
+        }
+        startBootstrap()
+    }
+
+    private fun startBootstrap() {
         lifecycleScope.launch {
             try {
-                bootstrap()
-                bootstrapCompleted = true
+                bootstrapCompleted = bootstrap()
             } catch (e: Exception) {
                 showError("Startup failed: ${e.message}\n\n${e.stackTraceToString()}", copyable = true)
             } finally {

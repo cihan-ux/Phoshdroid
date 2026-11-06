@@ -73,7 +73,7 @@ class ProotService : Service() {
         prootProcess =
             manager?.login(
                 startupScript = startupScript,
-                bindSdcard = prefs.bindSdcard,
+                bindSdcard = prefs.bindSdcard && canBindSharedStorage(),
             )
 
         Thread({
@@ -114,7 +114,7 @@ class ProotService : Service() {
                 prootProcess =
                     manager?.login(
                         startupScript = startupScript,
-                        bindSdcard = prefs.bindSdcard,
+                        bindSdcard = prefs.bindSdcard && canBindSharedStorage(),
                     )
                 val retryOutput =
                     try {
